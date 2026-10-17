@@ -1,0 +1,25 @@
+# Kịch bản chạy riêng của máy
+switch-key.ps1
+run-opencode.ps1
+
+# Nhật ký
+*.log
+
+# Thư mục làm việc của công cụ
+.opencode/
+.verify/
+
+# Thư viện và bản build - không đưa mã nguồn vào đây
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Hệ điều hành
+.DS_Store
+Thumbs.db
+
+# Tệp tạm của trình soạn thảo
+.vscode/
+.idea/
+*.swp

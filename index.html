@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PC Builder 3D - Trình Mô Phỏng Lắp Ráp Máy Tính</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'><path d='M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z'/></svg>">
+</head>
+<body>
+  <!-- 3D Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Crosshair -->
+  <div id="crosshair"></div>
+
+  <!-- In-game Hover Interaction Prompt -->
+  <div id="hud-prompt">
+    <span class="prompt-text">[Chuột trái] Tương tác</span>
+  </div>
+
+  <!-- HUD Top Bar -->
+  <div id="hud-top-bar">
+    <div class="game-logo">⚡ PC BUILDER 3D</div>
+    <div id="shiftlock-status" class="active">Shift-Lock: BẬT (Khóa tâm)</div>
+  </div>
+
+  <!-- HUD Bottom Hotkeys Bar -->
+  <div id="hud-bottom-bar">
+    <div class="key-hint">
+      <span class="key-tag">W A S D</span>
+      <span>Di chuyển</span>
+    </div>
+    <div class="key-hint">
+      <span class="key-tag">Chuột trái</span>
+      <span>Cầm / Lắp ráp / Thả</span>
+    </div>
+    <div class="key-hint">
+      <span class="key-tag">Chuột phải (giữ)</span>
+      <span>Xoay vật thể 360°</span>
+    </div>
+    <div class="key-hint active">
+      <span class="key-tag">E</span>
+      <span>Cất vào túi đồ</span>
+    </div>
+    <div class="key-hint active">
+      <span class="key-tag">R</span>
+      <span>Kho đồ (Inventory)</span>
+    </div>
+    <div class="key-hint">
+      <span class="key-tag">Shift</span>
+      <span>Thoát / Khóa Shift-Lock</span>
+    </div>
+  </div>
+
+  <!-- RPG Inventory Modal with Square Slots Grid -->
+  <div id="inventory-modal">
+    <div class="rpg-inv-container">
+      <!-- Inventory Header -->
+      <div class="inv-top-bar">
+        <div class="inv-title-group">
+          <div class="inv-title">🎒 KHO LINH KIỆN & BA LÔ (INVENTORY)</div>
+          <div id="inv-capacity-badge" class="inv-capacity-badge">0 / 24 Ô CHỨA</div>
+        </div>
+        <div class="inv-header-hints">
+          <span class="inv-hint-tag">🖱️ [Chuột trái] Chọn / Bỏ chọn</span>
+          <span class="inv-hint-tag">🗑️ [E] Vứt ra ngoài</span>
+          <span class="inv-hint-tag">✕ [R / ESC] Đóng</span>
+        </div>
+        <button id="btn-close-inventory" title="Đóng (Phím R hoặc ESC)">✕</button>
+      </div>
+
+      <!-- Main Content: Left Slots Grid + Right Detail Panel -->
+      <div class="inv-body">
+        <!-- Left: Square Slots Grid (Dải ô vuông trống) -->
+        <div class="inv-grid-section">
+          <div class="inv-section-title">
+            <span>CÁC NGĂN CHỨA LINH KIỆN</span>
+            <span class="inv-section-sub">Nhấp vào ô có đồ để xem thông số & tag</span>
+          </div>
+          <div id="inventory-grid" class="inventory-slots-grid">
+            <!-- 24 square slots rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Right: Hardware Details Panel (Slides/shows on selection) -->
+        <div id="inv-detail-panel" class="inv-detail-panel">
+          <!-- Empty State -->
+          <div id="inv-empty-detail" class="inv-empty-detail">
+            <div class="empty-icon">📦</div>
+            <div class="empty-title">Chưa chọn linh kiện nào</div>
+            <div class="empty-desc">
+              Nhấp <strong>Chuột trái</strong> vào một ô vuông có chứa linh kiện để xem thông số kỹ thuật và tag phần cứng.<br><br>
+              Nhấp lần nữa để <strong>Bỏ chọn</strong>.<br><br>
+              Khi đang chọn một ô, nhấn phím <strong>[E]</strong> để vứt linh kiện ra ngoài theo hướng tâm ngắm.
+            </div>
+          </div>
+
+          <!-- Active Detail View -->
+          <div id="inv-active-detail" class="inv-active-detail" style="display: none;">
+            <!-- 3D Interactive Model Preview Box (Square) -->
+            <div class="inv-preview-box">
+              <canvas id="item-preview-canvas"></canvas>
+              <div class="preview-overlay-hint">🔄 Kéo chuột để xoay 360°</div>
+            </div>
+
+            <!-- Specs Sheet -->
+            <div class="inv-specs-panel">
+              <div class="specs-header">
+                <div>
+                  <span id="inv-item-tag" class="inv-tag tag-motherboard">Tag: Motherboard</span>
+                  <div id="inv-item-name">Tên linh kiện</div>
+                  <div id="inv-item-brand">Thương hiệu • Giá thành</div>
+                </div>
+              </div>
+
+              <!-- Technical Specifications Table (From Wiki) -->
+              <div id="inv-specs-list" class="inv-specs-list">
+                <!-- Dynamically populated -->
+              </div>
+
+              <!-- Beginner Tip / Lore -->
+              <div id="inv-item-tip" class="inv-item-tip">
+                <!-- Beginner tips -->
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="inv-action-buttons">
+                <button id="btn-inv-equip" class="btn-rpg btn-primary">⚡ Cầm trên tay (Equip)</button>
+                <button id="btn-inv-drop" class="btn-rpg btn-secondary">🗑️ Vứt ra ngoài (Phím E)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parts To-Do List (opened by left-clicking the clipboard on the bench) -->
+  <div id="todo-list-modal">
+    <div class="todo-list-container">
+      <div class="todo-list-head">
+        <div class="todo-list-title-group">
+          <span class="todo-list-title">📋 DANH SÁCH LINH KIỆN CẦN LẤY</span>
+          <span id="todo-list-badge" class="todo-list-badge">BƯỚC 1 / 12</span>
+        </div>
+        <button class="todo-list-close" title="Đóng (ESC)">✕</button>
+      </div>
+
+      <div class="todo-list-progress">
+        <div id="todo-list-progress-fill" class="todo-list-progress-fill"></div>
+      </div>
+      <div id="todo-list-summary" class="todo-list-summary"></div>
+
+      <ul id="todo-list-rows" class="todo-list-rows"></ul>
+    </div>
+  </div>
+
+  <!-- Build Mode Modal -->
+  <div id="build-mode-modal">
+    <div class="build-mode-container">
+      <div class="build-mode-top-bar">
+        <div class="build-mode-title-group">
+          <span class="build-mode-title">🛠️ CHẾ ĐỘ LẮP RÁP THÙNG MÁY (BUILD MODE)</span>
+          <span id="build-step-badge" class="build-step-badge">BƯỚC 1 / 12</span>
+        </div>
+        <div class="build-top-actions">
+          <button id="btn-toggle-glass" class="build-glass-btn">🔓 Tháo Nắp Kính</button>
+          <button id="btn-build-finish" class="build-finish-btn" style="display:none;">✅ Vặn Kính &amp; Hoàn Tất</button>
+          <button id="btn-build-reset" class="build-reset-btn" title="Làm lại từ đầu">↺ Làm lại</button>
+          <button id="btn-close-build-mode" title="Đóng (ESC)">✕</button>
+        </div>
+      </div>
+
+      <div class="build-mode-body">
+        <!-- Left: Build Zone - the x-ray case you assemble inside -->
+        <div class="build-zone-side">
+          <canvas id="build-case-canvas"></canvas>
+
+          <div class="build-zone-topline">
+            <span id="glass-status-tag" class="build-case-info-tag">🔓 Nắp kính: Đã tháo</span>
+            <span class="build-xray-tag">🔍 Vỏ thùng trong suốt 50%</span>
+            <span id="build-zoom-tag" class="build-xray-tag">🔍 Thu phóng 100%</span>
+            <span id="build-turn-tag" class="build-xray-tag" title="Chuột phải: xoay góc nhìn thùng máy. Phím Home: về góc mặc định.">🔄 Chuột phải: xoay góc nhìn</span>
+          </div>
+
+          <div id="build-zone-hint" class="build-zone-hint"></div>
+          <div id="build-toast" class="build-toast"></div>
+          <div id="build-action-bar" class="build-action-bar"></div>
+        </div>
+
+        <!-- Right: current step + the 12 step checklist -->
+        <div class="build-panel-side">
+          <div class="build-panel-scroll">
+            <div class="build-step-head">
+              <div id="build-step-title" class="build-step-title">Bước 1</div>
+              <div id="build-step-hint" class="build-step-short"></div>
+            </div>
+            <div class="build-progress-track">
+              <div id="build-progress-fill" class="build-progress-fill"></div>
+            </div>
+        <p id="build-step-desc" class="build-step-desc"></p>
+        <div id="build-step-parts" class="build-step-parts"></div>
+        <div id="build-step-tip" class="build-step-tip"></div>
+
+            <div class="build-checklist-title">TIẾN ĐỘ 12 BƯỚC</div>
+            <div id="build-checklist" class="build-checklist"></div>
+          </div>
+        </div>
+
+        <!-- Far right: hardware slots showing real 3D models -->
+        <div class="build-inventory-side">
+          <div class="build-sidebar-title">📦 LINH KIỆN TRONG KHO</div>
+          <div class="build-sidebar-sub">Chọn linh kiện → rê chuột vào Build Zone → bấm chuột trái</div>
+          <div id="build-slot-list" class="build-slot-list"></div>
+          <div id="build-slot-empty" class="build-vertical-empty">
+            Kho đồ trống.<br>Hãy nhặt linh kiện từ bàn rồi bỏ vào túi (phím E) hoặc vứt ra bàn.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loading-logo">PC BUILDER 3D SIMULATOR</div>
+    <div class="loading-subtitle">Khởi tạo không gian phòng 3D & nạp dữ liệu linh kiện...</div>
+    <div id="loading-bar-wrap">
+      <div id="loading-bar-fill"></div>
+    </div>
+    <div id="loading-text">Đang tải tài nguyên mô hình 3D... 0%</div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

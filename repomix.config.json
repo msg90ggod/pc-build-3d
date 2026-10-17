@@ -1,0 +1,18 @@
+{
+  "output": {
+    "filePath": "repomix-output.md"
+  },
+  "ignore": {
+    "customPatterns": [
+      "**/package-lock.json",
+      "**/yarn.lock",
+      "**/*.svg",
+      "**/*.gltf",
+      "**/*.glb",
+      "**/*.bin",
+      "**/dist/**",
+      "**/build/**",
+      "**/*.map"
+    ]
+  }
+}
