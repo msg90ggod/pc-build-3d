@@ -59,11 +59,76 @@ Trình mô phỏng 3D tương tác trực quan cao cấp chạy trực tiếp tr
 
 ## 🚀 Hướng Dẫn Khởi Chạy
 
-1. **Khởi chạy nhanh:**
-   - Double click vào file `start.bat` trong thư mục này. Trình duyệt sẽ tự động mở tại địa chỉ `http://localhost:5173`.
+> **Bắt buộc: máy phải có [Node.js 18 trở lên](https://nodejs.org).** Kiểm tra bằng cách mở
+> PowerShell và gõ `node -v`. Nếu không có số phiên bản hiện ra, hãy cài Node.js rồi mở lại máy.
 
-2. **Khởi chạy thủ công từ terminal:**
-   ```bash
-   cd "C:\Users\Quynh Tien\pc-builder-3d"
-   npm run dev
-   ```
+### Cách 1: Bấm một phát (khuyên dùng)
+
+1. Tải mã nguồn về: vào trang repo → nút **Code** → **Download ZIP** (khoảng 194 MB, vì có sẵn
+   27 file model `.glb` bên trong).
+2. Giải nén ZIP ra một thư mục.
+3. **Double click vào `start.bat`.**
+
+Lần chạy đầu tiên, `start.bat` sẽ tự cài thư viện (vài phút) rồi mở trình duyệt tại
+`http://localhost:5173`. Các lần sau chỉ mất vài giây.
+
+### Cách 2: Gõ lệnh trong PowerShell
+
+```powershell
+cd <đường-dẫn-tới-thư-mục-dự-án>
+npm install     # chỉ cần làm lần đầu
+npm run dev
+```
+
+Rồi mở trình duyệt tại `http://localhost:5173`.
+
+### Vì sao phải `npm install`?
+
+`node_modules` — nơi chứa thư viện như Three.js và Vite — **không được lưu trong repo** (nặng
+hơn 250 MB), nên sau khi tải mã nguồn về thư mục đó chưa tồn tại. Lệnh `npm run dev` gọi đúng tên
+`vite` nằm trong đó, nên thiếu bước này sẽ báo:
+
+```
+'vite' is not recognized as an internal or external command
+```
+
+`start.bat` đã tự làm bước này giúp bạn.
+
+### Không mở thẳng file `index.html`
+
+Dự án dùng ES modules, trình duyệt chặn việc nạp chúng qua `file://` — double click
+`index.html` sẽ ra màn hình trắng. Phải qua server (`npm run dev` hoặc `start.bat`).
+Xem trực tiếp trên trang GitHub cũng không chạy được, vì GitHub không phải là web server.
+
+---
+
+## 🛠 Xử Lý Sự Cố
+
+### Trình duyệt báo `localhost refused to connect` / `ERR_CONNECTION_REFUSED`
+
+Cửa sổ đen đã báo lỗi, hoặc nó không mở cửa sổ nào cả. Vài nguyên nhân thường gặp:
+
+- **Cổng 5173 đang bị chiếm** bởi một bản game khác đang chạy. Cửa sổ đen sẽ in ra
+  `Port 5173 is already in use`. Tắt bản kia đi rồi chạy lại — dự án cố ý **không** tự đổi
+  cổng, vì mọi hướng dẫn đều ghi địa chỉ `localhost:5173`.
+- **Bạn mở nhầm cổng.** Nếu cửa sổ đen ghi rõ địa chỉ nào thì mở đúng địa chỉ đó.
+- **Server chưa lên.** Đợi vài giây rồi bấm F5.
+
+### Không thấy "tab server" như hướng dẫn khác
+
+Bảng **PORTS** là của VS Code, không phải của game. Nó hiện cổng server đang chạy, và chỉ hiện
+khi bạn chạy `npm run dev` **từ terminal tích hợp của VS Code**. Mở nó bằng `Ctrl+Shift+P` rồi
+gõ **Ports: Focus on Ports View**. Nếu bạn chạy game bằng `start.bat` thì không có tab nào cả —
+đó là bình thường, cứ chạy `start.bat`.
+
+### Màn hình trắng, không thấy gì
+
+- Kiểm tra cửa sổ đen có còn chạy không (đừng tắt nó).
+- Mở Console của trình duyệt (F12) để xem lỗi.
+- Nếu vừa đổi máy hoặc đổi phiên bản Three.js, xoá thư mục `node_modules` rồi `npm install`
+  lại.
+
+### Máy chậm, quay giật
+
+Trình duyệt đang tải 27 file model `.glb` (tổng 194 MB). Lần đầu mất lâu là bình thường. Nên dùng
+Chrome hoặc Edge, và tắt các thẻ tab khác để nhánh đồ họa có nhiều bộ nhớ.
